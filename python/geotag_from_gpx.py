@@ -9,6 +9,7 @@ import time
 from pyexiv2.utils import make_fraction
 from dateutil.tz import tzlocal
 from lib.geo import interpolate_lat_lon, decimal_to_dms, utc_to_localtime
+from joblib import Parallel, delayed
 
 try:
     import gpxpy
@@ -188,7 +189,10 @@ if __name__ == '__main__':
 
     print("===\nStarting geotagging of {0} images using {1}.\n===".format(len(file_list), args.gpx_file))
 
-    for filepath, filetime in zip(file_list, sub_second_times):
-        add_exif_using_timestamp(filepath, filetime, gpx, args.time_offset)
+    Parallel(n_jobs=4)(delayed(add_exif_using_timestamp)(filepath,
+                                                         filetime,
+                                                         gpx,
+                                                         args.time_offset)
+                       for filepath, filetime in zip(file_list, sub_second_times))
 
     print("Done geotagging {0} images in {1:.1f} seconds.".format(len(file_list), time.time()-start_time))
